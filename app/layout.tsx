@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://vettme.com"), // ✅ Replace with your actual domain
+  metadataBase: new URL("https://vettme-six.vercel.app"), 
   title: {
     default: "VettMe — Pre-Employment Validation",
     template: "%s | VettMe",
@@ -41,32 +41,24 @@ export const metadata: Metadata = {
     title: "VettMe — Pre-Employment Validation",
     description:
       "Verify candidates before the interview. NIN, BVN, phone, email validation in one place.",
-    url: "https://vettme.com",
+    url: "https://vettme-six.vercel.app",
     siteName: "VettMe",
     locale: "en_US",
     type: "website",
-    images: [
-      {
-        url: "https://vettme.com/og-image.jpg", // ⚠️ Replace with your actual image URL
-        width: 1200,
-        height: 630,
-        alt: "VettMe - Candidate Validation Dashboard",
-      },
-    ],
+    // 🔀 Next.js automatically maps your opengraph-image.png here!
   },
   twitter: {
     card: "summary_large_image",
     title: "VettMe — Pre-Employment Validation",
     description:
       "Verify candidates before the interview. NIN, BVN, phone, email validation in one place.",
-    images: ["https://vettme.com/og-image.jpg"], // ⚠️ Replace with your actual image URL
+    // 🔀 Next.js automatically maps your opengraph-image.png here too!
   },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
-  // manifest: "/manifest.json", // optional if you have a PWA manifest
 };
 
 export default function RootLayout({
