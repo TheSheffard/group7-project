@@ -45,10 +45,10 @@ export const metadata: Metadata = {
     siteName: "VettMe",
     locale: "en_US",
     type: "website",
-    // 📱 Forced array fallback for WhatsApp to read instantly
+    // 🌐 Fixed: Made the URL absolute and mapped it to your .jpg file!
     images: [
       {
-        url: "/opengraph-image.jpg", 
+        url: "https://vercel.app", 
         width: 1200,
         height: 630,
         alt: "VettMe - Pre-Employment Validation Dashboard Preview",
@@ -60,7 +60,8 @@ export const metadata: Metadata = {
     title: "VettMe — Pre-Employment Validation",
     description:
       "Verify candidates before the interview. NIN, BVN, phone, email validation in one place.",
-    images: ["/opengraph-image.jpg"],
+    // 🌐 Fixed here too
+    images: ["https://vercel.app"],
   },
   icons: {
     icon: "/favicon.ico",
