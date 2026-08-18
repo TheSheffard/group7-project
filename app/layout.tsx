@@ -45,14 +45,22 @@ export const metadata: Metadata = {
     siteName: "VettMe",
     locale: "en_US",
     type: "website",
-    // 🔀 Next.js automatically maps your opengraph-image.png here!
+    // 📱 Forced array fallback for WhatsApp to read instantly
+    images: [
+      {
+        url: "/opengraph-image.jpg", 
+        width: 1200,
+        height: 630,
+        alt: "VettMe - Pre-Employment Validation Dashboard Preview",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "VettMe — Pre-Employment Validation",
     description:
       "Verify candidates before the interview. NIN, BVN, phone, email validation in one place.",
-    // 🔀 Next.js automatically maps your opengraph-image.png here too!
+    images: ["/opengraph-image.jpg"],
   },
   icons: {
     icon: "/favicon.ico",
