@@ -34,15 +34,8 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
     const {
-      candidateName,
-      nin,
-      phone,
-      email,
-      stateOfOrigin,
-      bvn,
-      results,
-      overallVerdict,
-      idempotencyKey,
+      candidateName, nin, phone, email, stateOfOrigin, bvn,
+      results, overallVerdict, idempotencyKey,
     } = body;
 
     if (!candidateName || !nin || !phone || !email) {
@@ -52,48 +45,33 @@ export async function POST(req: Request) {
       );
     }
 
-    // Basic format checks
     const cleanNin = (nin || "").replace(/\s/g, "");
     if (!/^\d{11}$/.test(cleanNin)) {
-      return NextResponse.json({ error: "Invalid NIN — must be exactly 11 digits" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid NIN - must be exactly 11 digits" }, { status: 400 });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
-    // Idempotency: same key => return the existing record instead of a duplicate
     const key = idempotencyKey || randomUUID();
-    const existing = await Vetting.findOne({
-      userId: session.userId,
-      idempotencyKey: key,
-    }).lean();
-
+    const existing = await Vetting.findOne({ userId: session.userId, idempotencyKey: key }).lean();
     if (existing) {
       return NextResponse.json({ vetting: existing, duplicate: true }, { status: 200 });
     }
 
-    // NIN uniqueness — the same candidate must not be vetted twice by this account
-    const alreadyVetted = await Vetting.findOne({
-      userId: session.userId,
-      nin: cleanNin,
-    }).lean();
-
+    const alreadyVetted = await Vetting.findOne({ userId: session.userId, nin: cleanNin }).lean();
     if (alreadyVetted) {
       return NextResponse.json(
-        {
-          error: `This NIN (${cleanNin}) has already been vetted in your account. Duplicate submissions are not allowed.`,
-          duplicateNin: true,
-        },
+        { error: `This NIN (${cleanNin}) has already been vetted in your account. Duplicate submissions are not allowed.` },
         { status: 409 }
       );
     }
 
-    // Re-validate if no results provided
     let finalResults = results;
     let finalVerdict = overallVerdict;
     if (!finalResults) {
       const { runValidation } = await import("@/lib/validators");
-      const result = await runValidation({ email, phone, nin, candidateName, stateOfOrigin, bvn });
+      const result = await runValidation({ email, phone, nin: cleanNin, candidateName, stateOfOrigin, bvn });
       finalResults = result.results;
       finalVerdict = result.overallVerdict;
     }
@@ -101,14 +79,9 @@ export async function POST(req: Request) {
     const vetting = await Vetting.create({
       userId: session.userId,
       candidateName,
-      nin,
-      phone,
-      email,
-      stateOfOrigin,
-      bvn,
-      verifyToken: randomUUID(),
+      nin: cleanNin,
+      phone, email, stateOfOrigin, bvn,
       idempotencyKey: key,
-      verificationStatus: "pending",
       results: finalResults,
       overallVerdict: finalVerdict,
     });

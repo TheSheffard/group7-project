@@ -1,6 +1,12 @@
 import type { ValidatorResult } from "./index";
 
-interface NinRecord {
+/* ---------- MOCK NIN REGISTRY ----------
+ * A "very big" in-app mock list, treated like an internal API.
+ * swap with a licensed aggregator (NIMC/Dojah/Prembly/Youverify)
+ * in production by replacing the lookupNIN() function below — nothing
+ * else in the codebase needs to change.
+ */
+interface MockNinRecord {
   firstname: string;
   lastname: string;
   middlename?: string;
@@ -10,21 +16,40 @@ interface NinRecord {
   phone: string;
 }
 
-const MOCK_RECORDS: Record<string, NinRecord> = {
-  "12345678901": {
-    firstname: "Adebayo", lastname: "Okafor", middlename: "Emeka",
-    state: "Lagos", dob: "1990-04-15", gender: "Male", phone: "08030000001",
-  },
-  "70123456789": {
-    firstname: "Jane", lastname: "Doe",
-    state: "Abuja", dob: "1995-08-22", gender: "Female", phone: "08030000002",
-  },
-  "22222222222": {
-    firstname: "Chidi", lastname: "Okonkwo",
-    state: "Anambra", dob: "1988-12-01", gender: "Male", phone: "08030000003",
-  },
+type MockNinRegistry = Record<string, MockNinRecord>;
+
+const MOCK_NIN_REGISTRY: MockNinRegistry = {
+  "12345678901": { firstname: "Adebayo", lastname: "Okafor", middlename: "Emeka", state: "Lagos",      dob: "1990-04-15", gender: "Male",   phone: "08030000001" },
+  "70123456789": { firstname: "Jane",    lastname: "Doe",                          state: "Abuja",     dob: "1995-08-22", gender: "Female", phone: "08030000002" },
+  "22222222222": { firstname: "Chidi",   lastname: "Okonkwo",                      state: "Anambra",   dob: "1988-12-01", gender: "Male",   phone: "08030000003" },
+  "33333333333": { firstname: "Aisha",   lastname: "Bello",                         state: "Kano",      dob: "1993-06-20", gender: "Female", phone: "08030000004" },
+  "44444444444": { firstname: "Tunde",   lastname: "Adeyemi",                        state: "Oyo",       dob: "1985-09-12", gender: "Male",   phone: "08030000005" },
+  "55555555555": { firstname: "Folake",  lastname: "Akinola", middlename: "Bukola",    state: "Osun",      dob: "1992-03-25", gender: "Female", phone: "08030000006" },
+  "66666666666": { firstname: "Emeka",   lastname: "Eze",                            state: "Enugu",     dob: "1987-07-08", gender: "Male",   phone: "08030000007" },
+  "77777777777": { firstname: "Ngozi",   lastname: "Okafor",                         state: "Imo",       dob: "1991-11-14", gender: "Female", phone: "08030000008" },
+  "88888888888": { firstname: "Ibrahim", lastname: "Sani",                           state: "Kaduna",    dob: "1986-05-30", gender: "Male",   phone: "08030000009" },
+  "99999999999": { firstname: "Yetunde", lastname: "Ogun",                           state: "Ogun",      dob: "1994-02-18", gender: "Female", phone: "08030000010" },
+  "10101010101": { firstname: "Olusegun", lastname: "Adelaja",                        state: "Kwara",     dob: "1989-08-22", gender: "Male",   phone: "08030000011" },
+  "12121212121": { firstname: "Femi",    lastname: "Falana",                         state: "Lagos",     dob: "1993-04-09", gender: "Male",   phone: "08030000012" },
+  "13131313131": { firstname: "Bisi",    lastname: "Lawal",                          state: "Oyo",       dob: "1997-10-05", gender: "Female", phone: "08030000013" },
+  "14141414141": { firstname: "Aminu",   lastname: "Garba",                          state: "Borno",     dob: "1984-12-30", gender: "Male",   phone: "08030000014" },
+  "15151515151": { firstname: "Chinwe",  lastname: "Eke",                            state: "Abia",      dob: "1996-01-17", gender: "Female", phone: "08030000015" },
+  "16161616161": { firstname: "Babatunde", lastname: "Kazeem",                        state: "Oyo",       dob: "1988-06-25", gender: "Male",   phone: "08030000016" },
+  "17171717171": { firstname: "Funmilola", lastname: "Afolabi",                       state: "Ekiti",     dob: "1990-09-14", gender: "Female", phone: "08030000017" },
+  "18181818181": { firstname: "Segun",   lastname: "Adebayo",                        state: "Lagos",     dob: "1987-03-11", gender: "Male",   phone: "08030000018" },
 };
 
+/**
+ * Mock registry lookup. Treat it like an internal API call:
+ * returns null on not-found, returns the record on hit.
+ * A tiny delay simulates network latency for realistic UX.
+ */
+async function lookupNIN(nin: string): Promise<MockNinRecord | null> {
+  await new Promise((r) => setTimeout(r, 50)); // tiny simulated latency
+  return MOCK_NIN_REGISTRY[nin] || null;
+}
+
+/* ---------- Matching primitives ---------- */
 function normalizeTokens(name: string): string[] {
   return name.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(Boolean);
 }
@@ -81,66 +106,7 @@ function normalizeState(input: string): string {
   return input.trim();
 }
 
-// ---------- Didit API (correct endpoint: /v3/database-validation/) ----------
-interface DiditMatch {
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  matchScore: number;
-}
-
-async function diditLookup(
-  nin: string, firstName: string, lastName: string
-): Promise<DiditMatch | null> {
-  const key = process.env.DIDIT_API_KEY;
-  if (!key) return null;
-
-  try {
-    const fd = new FormData();
-    fd.append("issuing_state", "NGA");
-    fd.append("services", "nga_national_id");
-    fd.append("first_name", firstName);
-    fd.append("last_name", lastName);
-    fd.append("national_id", nin);
-
-    const res = await fetch("https://verification.didit.me/v3/database-validation/", {
-      method: "POST",
-      headers: { "x-api-key": key },
-      body: fd,
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.warn(
-        res.status === 403
-          ? "Didit 403: out of credits for nga_national_id (paid module). Free tier covers ID + Liveness + FaceMatch only. Falling back to mock."
-          : "Didit error: " + res.status + " " + errText.slice(0, 200)
-      );
-      return null;
-    }
-
-    const data = await res.json();
-    console.log("Didit response:", JSON.stringify(data, null, 2));
-
-    if (data?.status === "Approved" || data?.match_type?.includes("match")) {
-      const src = data.validations?.[0]?.source_data;
-      if (src?.name_match_score) {
-        return {
-          firstName: src.first_name || src.full_name?.split(" ")[0] || "",
-          lastName: src.last_name || src.full_name?.split(" ").slice(1).join(" ") || "",
-          fullName: src.full_name || "",
-          matchScore: parseFloat(src.name_match_score),
-        };
-      }
-    }
-    return null;
-  } catch (err) {
-    console.warn("Didit fetch failed:", err);
-    return null;
-  }
-}
-
-// ---------- Main validation ----------
+/* ---------- Main validation ---------- */
 export interface NinValidationInput {
   nin: string;
   candidateName: string;
@@ -151,78 +117,71 @@ export async function validateNIN(input: NinValidationInput): Promise<ValidatorR
   const { nin, candidateName, stateOfOrigin } = input;
   const cleaned = nin.replace(/\s/g, "");
 
+  // 1. Format check
   if (!/^\d{11}$/.test(cleaned)) {
     return {
-      component: "nin", valid: false,
-      reason: "NIN must be exactly 11 digits", score: 0,
+      component: "nin",
+      valid: false,
+      reason: "NIN must be exactly 11 digits",
+      score: 0,
       details: { formatCheck: false },
     };
   }
 
-  // Split name for API
-  const tokens = candidateName.trim().split(/\s+/);
-  const firstName = tokens[0] || "";
-  const lastName = tokens.slice(1).join(" ") || firstName;
-
-  // Try Didit live
-  const live = await diditLookup(cleaned, firstName, lastName);
-
-  let nameScore: number;
-  let provider = "mock";
-  let officialName = "";
-  let officialState = "";
-  let canCheckState = false;
-
-  if (live) {
-    provider = "didit";
-    nameScore = live.matchScore;
-    officialName = live.fullName;
-    canCheckState = false; // Didit db validation does not return state
-  } else {
-    const rec = MOCK_RECORDS[cleaned];
-    if (!rec) {
-      return {
-        component: "nin", valid: false,
-        reason: "NIN not found in registry", score: 0.1,
-        details: { formatCheck: true, recordFound: false, provider },
-      };
-    }
-    const nm = computeNameMatch(candidateName, {
-      firstname: rec.firstname, lastname: rec.lastname, middlename: rec.middlename,
-    });
-    nameScore = nm.score;
-    officialName = rec.firstname + " " + rec.lastname;
-    officialState = rec.state;
-    canCheckState = true;
+  // 2. Mock-registry lookup
+  const record = await lookupNIN(cleaned);
+  if (!record) {
+    return {
+      component: "nin",
+      valid: false,
+      reason: "NIN not found in the registry",
+      score: 0.1,
+      details: { formatCheck: true, recordFound: false, provider: "mock" },
+    };
   }
 
-  // State matching (mock only)
+  // 3. Name match (Levenshtein on first/last tokens vs registry)
+  const { score: nameScore } = computeNameMatch(candidateName, {
+    firstname: record.firstname,
+    lastname: record.lastname,
+    middlename: record.middlename,
+  });
+
+  // 4. State-of-origin match (only meaningful when the user supplied one)
   let stateMatch: boolean | undefined;
-  if (canCheckState && stateOfOrigin?.trim()) {
-    stateMatch = normalizeState(stateOfOrigin).toLowerCase() === normalizeState(officialState).toLowerCase();
+  if (stateOfOrigin && stateOfOrigin.trim()) {
+    const a = normalizeState(stateOfOrigin).toLowerCase();
+    const b = normalizeState(record.state).toLowerCase();
+    stateMatch = a === b;
   }
 
-  // Final score
-  const hasState = canCheckState && !!stateOfOrigin?.trim();
+  // 5. Combine scores
+  const hasState = stateMatch !== undefined;
   const wName = hasState ? 0.6 : 1;
   const wState = hasState ? 0.4 : 0;
   const sState = stateMatch === false ? 0 : 1;
   const finalScore = Math.round((nameScore * wName + sState * wState) * 100) / 100;
+
   const overallValid = finalScore >= 0.7;
 
   return {
     component: "nin",
     valid: overallValid,
     reason: overallValid
-      ? "NIN verified - " + (nameScore >= 0.85 ? "name matches" : "name closely matches")
+      ? `NIN verified — name ${nameScore >= 0.85 ? "matches" : "closely matches"}`
       : "NIN mismatch detected",
     score: finalScore,
     details: {
-      formatCheck: true, recordFound: true, provider,
+      formatCheck: true,
+      recordFound: true,
+      provider: "mock",
       nameMatch: Math.round(nameScore * 100) / 100,
-      stateMatch: stateMatch !== undefined ? (stateMatch ? "match" : "mismatch") : "unavailable via live API",
-      officialName,
-      officialState: canCheckState ? officialState : "not returned by Didit",
-    },
+      stateMatch: stateMatch !== undefined ? (stateMatch ? "match" : "mismatch") : undefined,
+      officialName: `${record.firstname} ${record.lastname}`,
+      officialState: record.state,
+    } as Record<string, unknown>,
   };
 }
+
+/** Exported so the report / documentation can list known test NINs. */
+export const MOCK_TEST_NINS = Object.keys(MOCK_NIN_REGISTRY);

@@ -10,14 +10,7 @@ export interface IVetting extends Document {
   bvn?: string;
   results: VettingResultItem[];
   overallVerdict: "verified" | "needs_review" | "failed";
-  // --- Identity verification (session flow) ---
-  verificationStatus: "pending" | "awaiting_candidate" | "verified" | "failed";
-  diditSessionId?: string;
-  diditUrl?: string;
-  verifyToken: string;
   idempotencyKey: string;
-  expiresAt?: Date;
-  ninCardPhoto?: string; // base64 (demo record only)
   createdAt: Date;
 }
 
@@ -54,22 +47,15 @@ const VettingSchema = new Schema<IVetting>({
     enum: ["verified", "needs_review", "failed"],
     required: true,
   },
-  verificationStatus: {
-    type: String,
-    enum: ["pending", "awaiting_candidate", "verified", "failed"],
-    default: "pending",
-  },
-  diditSessionId: String,
-  diditUrl: String,
-  verifyToken: { type: String, required: true },
   idempotencyKey: { type: String, required: true },
-  expiresAt: Date,
-  ninCardPhoto: String,
   createdAt: { type: Date, default: Date.now },
 });
 
-// Idempotency: the same client submission (same key) never creates a duplicate record
+// Idempotency: same client submission never creates a duplicate.
 VettingSchema.index({ userId: 1, idempotencyKey: 1 }, { unique: true });
+
+// NIN uniqueness: a candidate must not be vetted twice by the same account.
+VettingSchema.index({ userId: 1, nin: 1 }, { unique: true });
 
 export const Vetting: Model<IVetting> =
   (mongoose.models.Vetting as Model<IVetting>) ||

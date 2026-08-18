@@ -3,7 +3,6 @@ import Navbar from "@/components/Navbar";
 import {
   Mail,
   ClipboardList,
-  BarChart3,
   ShieldCheck,
   UserCheck,
   Phone,
@@ -17,7 +16,7 @@ export default function Home() {
       <Navbar />
 
       {/* ===== HERO ===== */}
-      <section className="flex-1 bg-bg-warm  flex items-center justify-center px-4 pt-8 pb-12 md:pt-24 md:pb-20">
+      <section className="flex-1 bg-bg-warm  flex items-center justify-center px-4 pt-2 pb-12 md:pt-28 md:pb-20">
         <div className="max-w-4xl w-full">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-center">
             {/* Left — Text */}

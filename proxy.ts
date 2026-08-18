@@ -6,17 +6,12 @@ const publicPaths = [
   "/auth/signup",
   "/api/auth/login",
   "/api/auth/register",
-  "/api/verify/info",   // candidate checks their link (public)
-  "/api/verify/update", // candidate simulates completion (public)
-  "/api/webhooks/didit", // Didit webhook (public)
-  "/verify",            // candidate verification page (public)
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
-  // Allow public paths, API routes, and root
   if (
     publicPaths.some((p) => pathname.startsWith(p)) ||
     pathname === "/" ||
@@ -25,7 +20,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to login if no token
   if (!token) {
     const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
