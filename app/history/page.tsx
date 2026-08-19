@@ -45,7 +45,7 @@ export default function HistoryPage() {
         <div className="min-h-screen bg-slate-50">
             <Navbar />
 
-            <main className="mx-auto max-w-6xl px-4 py-18 sm:pt-26">
+            <main className="mx-auto max-w-6xl px-4 py-19 sm:pt-26">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800 sm:text-3xl">

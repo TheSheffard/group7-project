@@ -45,10 +45,9 @@ export const metadata: Metadata = {
     siteName: "VettMe",
     locale: "en_US",
     type: "website",
-    // 🌐 Fixed: Made the URL absolute and mapped it to your .jpg file!
     images: [
       {
-        url: "https://vercel.app", 
+        url: "https://postimg.cc", 
         width: 1200,
         height: 630,
         alt: "VettMe - Pre-Employment Validation Dashboard Preview",
@@ -60,8 +59,7 @@ export const metadata: Metadata = {
     title: "VettMe — Pre-Employment Validation",
     description:
       "Verify candidates before the interview. NIN, BVN, phone, email validation in one place.",
-    // 🌐 Fixed here too
-    images: ["https://vercel.app"],
+    images: ["https://postimg.cc"],
   },
   icons: {
     icon: "/favicon.ico",
@@ -76,7 +74,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // 💡 suppressHydrationWarning added here silences the dynamic font class name differences
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-bg-warm`}
       >
